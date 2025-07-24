@@ -44,7 +44,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     defaultValues: {
       name: category?.name || '',
       description: category?.description || '',
-      parentId: category?.parentId || '',
+      parentId: category?.parentId || 'none',
       color: category?.color || '#3B82F6',
       icon: category?.icon || '📁',
     },
@@ -82,16 +82,16 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="parent">Parent Category</Label>
           <Select
-            value={form.watch('parentId') || ''}
-            onValueChange={(value) => form.setValue('parentId', value || undefined)}
+            value={form.watch('parentId') || 'none'}
+            onValueChange={(value) => form.setValue('parentId', value === 'none' ? undefined : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select parent (optional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No parent (root category)</SelectItem>
+              <SelectItem value="none">No parent (root category)</SelectItem>
               {availableParents
-                .filter(p => p.id !== category?.id) // Don't allow self as parent
+                .filter(p => p.id !== category?.id && p.id && p.id.trim()) // Don't allow self as parent and filter invalid IDs
                 .map((parent) => (
                   <SelectItem key={parent.id} value={parent.id}>
                     {parent.name}

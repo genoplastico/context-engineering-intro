@@ -92,8 +92,19 @@ export class OrganizationDB {
     const docRef = this.getDoc(collectionName, docId);
     const now = serverTimestamp();
     
+    // Filter out undefined values as Firebase doesn't support them
+    const cleanedData: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        cleanedData[key] = value;
+      } else {
+        // For fields that should be null instead of undefined (like parentId)
+        cleanedData[key] = null;
+      }
+    }
+    
     await setDoc(docRef, {
-      ...data,
+      ...cleanedData,
       organizationId: this.organizationId,
       createdBy: this.userId,
       createdAt: now,
@@ -108,8 +119,20 @@ export class OrganizationDB {
     data: Partial<DocumentData>
   ): Promise<void> {
     const docRef = this.getDoc(collectionName, docId);
+    
+    // Filter out undefined values as Firebase doesn't support them
+    const cleanedData: Partial<DocumentData> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        cleanedData[key] = value;
+      } else {
+        // For fields that should be null instead of undefined (like parentId)
+        cleanedData[key] = null;
+      }
+    }
+    
     await updateDoc(docRef, {
-      ...data,
+      ...cleanedData,
       updatedAt: serverTimestamp(),
     });
   }
@@ -137,9 +160,22 @@ export class OrganizationDB {
     collectionName: string,
     constraints: QueryConstraint[] = []
   ): Promise<T[]> {
+    const collectionPath = getOrgCollection(this.organizationId, collectionName);
+    console.log('🔍 OrganizationDB query:', { 
+      collectionPath, 
+      organizationId: this.organizationId, 
+      userId: this.userId,
+      constraintsCount: constraints.length 
+    });
+    
     const collectionRef = this.getCollection<T>(collectionName);
     const q = query(collectionRef, ...constraints);
     const snapshot = await getDocs(q);
+    
+    console.log('🔍 Query result:', {
+      docsCount: snapshot.docs.length,
+      docs: snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }))
+    });
     
     return snapshot.docs.map(doc => ({
       id: doc.id,

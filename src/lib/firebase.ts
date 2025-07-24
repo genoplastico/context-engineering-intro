@@ -1,43 +1,43 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { firebaseConfigValues } from './firebase-config';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
+console.log('🚀 Firebase loading with hardcoded config (temporary fix)');
+console.log('🚀 Config values:', firebaseConfigValues);
+
+const firebaseConfig = firebaseConfigValues;
 
 // Validate Firebase configuration
 function validateFirebaseConfig() {
-  const requiredKeys = [
-    'NEXT_PUBLIC_FIREBASE_API_KEY',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', 
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_APP_ID',
-  ];
-
-  const missingKeys = requiredKeys.filter(key => !process.env[key]);
+  console.log('🔍 Validating hardcoded Firebase configuration...');
   
-  if (missingKeys.length > 0) {
-    throw new Error(`Missing Firebase configuration: ${missingKeys.join(', ')}`);
+  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+  
+  if (missingFields.length > 0) {
+    console.error('❌ Missing Firebase config fields:', missingFields);
+    throw new Error(`Missing Firebase configuration: ${missingFields.join(', ')}`);
   }
+  
+  console.log('✅ All Firebase configuration fields present!');
+  console.log('✅ Firebase config validation passed');
 }
 
 // Initialize Firebase
 let app;
 try {
+  console.log('🚀 Starting Firebase initialization...');
   validateFirebaseConfig();
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  
+  const existingApps = getApps();
+  console.log('🔧 Existing Firebase apps:', existingApps.length);
+  
+  app = existingApps.length > 0 ? getApp() : initializeApp(firebaseConfig);
+  console.log('✅ Firebase initialized successfully!');
 } catch (error) {
-  console.error('Firebase initialization error:', error);
+  console.error('❌ Firebase initialization error:', error);
   throw error;
 }
 
@@ -45,6 +45,27 @@ try {
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Initialize auth persistence promise
+let authPersistencePromise: Promise<void> | null = null;
+
+// Set auth persistence to local (survives browser sessions)
+if (typeof window !== 'undefined') {
+  authPersistencePromise = setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+      console.log('✅ Auth persistence set to browserLocalPersistence');
+    })
+    .catch((error) => {
+      console.error('❌ Failed to set auth persistence:', error);
+    });
+}
+
+// Export function to wait for auth persistence
+export const waitForAuthPersistence = async (): Promise<void> => {
+  if (authPersistencePromise) {
+    await authPersistencePromise;
+  }
+};
 
 // Connect to emulators in development
 if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_FIREBASE_EMULATOR === 'true') {

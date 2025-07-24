@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { orderBy, QueryConstraint } from 'firebase/firestore';
 import { OrganizationDB, ORG_COLLECTIONS } from '@/lib/db';
 import { AssetSpace } from '@/types/asset';
-import { useOrganization } from './useOrganization';
+import { useOrganizationContext } from '@/components/providers/OrganizationProvider';
 import { useAuth } from './useAuth';
 import { nanoid } from 'nanoid';
 
@@ -24,21 +24,32 @@ export const useSpaces = (): UseSpacesReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization } = useOrganizationContext();
   const { user } = useAuth();
 
-  const orgDB = currentOrganization && user 
-    ? new OrganizationDB(currentOrganization.id, user.uid)
-    : null;
 
-  const fetchSpaces = useCallback(async () => {
-    if (!orgDB) {
+  const orgDB = useMemo(() => {
+    if (currentOrganization && user) {
+      return new OrganizationDB(currentOrganization.id, user.uid);
+    }
+    return null;
+  }, [currentOrganization?.id, user?.uid]);
+
+  // Store the current organization ID to detect changes
+  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
+
+  const fetchSpaces = useCallback(async (forceRefresh = false) => {
+    console.log('🔍 fetchSpaces called, orgDB:', !!orgDB, 'currentOrganization:', !!currentOrganization, 'user:', !!user);
+    
+    if (!orgDB || !currentOrganization) {
+      console.log('🔍 No orgDB or organization, setting empty spaces');
       setSpaces([]);
       setLoading(false);
       return;
     }
 
     try {
+      console.log('🏢 useSpaces: Fetching spaces for org:', currentOrganization.id);
       setLoading(true);
       setError(null);
 
@@ -47,15 +58,17 @@ export const useSpaces = (): UseSpacesReturn => {
         ORG_COLLECTIONS.SPACES, 
         constraints
       );
-
+      
       setSpaces(fetchedSpaces);
+      setCurrentOrgId(currentOrganization.id);
+      console.log('🏢 useSpaces: Fetched', fetchedSpaces.length, 'spaces');
     } catch (err) {
-      console.error('Error fetching spaces:', err);
+      console.error('❌ Error fetching spaces:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch spaces');
     } finally {
       setLoading(false);
     }
-  }, [orgDB]);
+  }, [orgDB, currentOrganization?.id, user]);
 
   const createSpace = async (
     data: Omit<AssetSpace, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'>
@@ -69,11 +82,10 @@ export const useSpaces = (): UseSpacesReturn => {
       
       const spaceId = nanoid();
       await orgDB.create<AssetSpace>(ORG_COLLECTIONS.SPACES, spaceId, data);
-      
       // Refresh spaces list
-      await fetchSpaces();
+      await fetchSpaces(true);
     } catch (err) {
-      console.error('Error creating space:', err);
+      console.error('❌ Error creating space:', err);
       throw err;
     }
   };
@@ -88,7 +100,7 @@ export const useSpaces = (): UseSpacesReturn => {
       await orgDB.update(ORG_COLLECTIONS.SPACES, id, data);
       
       // Refresh spaces list
-      await fetchSpaces();
+      await fetchSpaces(true);
     } catch (err) {
       console.error('Error updating space:', err);
       throw err;
@@ -112,7 +124,7 @@ export const useSpaces = (): UseSpacesReturn => {
       await orgDB.delete(ORG_COLLECTIONS.SPACES, id);
       
       // Refresh spaces list
-      await fetchSpaces();
+      await fetchSpaces(true);
     } catch (err) {
       console.error('Error deleting space:', err);
       throw err;
@@ -121,24 +133,32 @@ export const useSpaces = (): UseSpacesReturn => {
 
   const getSpaceTree = (): AssetSpace[] => {
     const buildTree = (parentId?: string): AssetSpace[] => {
-      return spaces
-        .filter(space => space.parentId === parentId)
-        .map(space => ({
-          ...space,
-          children: buildTree(space.id),
-        }));
+      // Handle both undefined and null cases for root spaces
+      const childSpaces = spaces.filter(space => {
+        if (parentId === undefined || parentId === null) {
+          return space.parentId === undefined || space.parentId === null || space.parentId === '' || space.parentId === 'none';
+        }
+        return space.parentId === parentId;
+      });
+      
+      return childSpaces.map(space => ({
+        ...space,
+        children: buildTree(space.id),
+      }));
     };
 
     return buildTree();
   };
 
   const refetch = useCallback(() => {
-    fetchSpaces();
+    fetchSpaces(true);
   }, [fetchSpaces]);
 
   useEffect(() => {
-    fetchSpaces();
-  }, [fetchSpaces]);
+    if (currentOrganization?.id) {
+      fetchSpaces();
+    }
+  }, [currentOrganization?.id, fetchSpaces]);
 
   return {
     spaces,

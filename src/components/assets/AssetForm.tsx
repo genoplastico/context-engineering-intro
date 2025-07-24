@@ -42,8 +42,52 @@ export const AssetForm: React.FC<AssetFormProps> = ({
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  const { categories } = useCategories();
-  const { spaces } = useSpaces();
+  const { categories, createCategory } = useCategories();
+  const { spaces, createSpace } = useSpaces();
+
+  // Quick create handlers
+  const handleQuickCreateCategory = async (name: string) => {
+    try {
+      await createCategory({
+        name: name.trim(),
+        description: `Auto-created category: ${name}`,
+        color: '#3B82F6',
+        icon: '📁'
+      });
+      
+      // Find the newly created category and set it as selected
+      setTimeout(() => {
+        const newCategory = categories.find(cat => cat.name === name.trim());
+        if (newCategory) {
+          form.setValue('categoryId', newCategory.id);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Error creating category. Please try again.');
+    }
+  };
+
+  const handleQuickCreateSpace = async (name: string) => {
+    try {
+      await createSpace({
+        name: name.trim(),
+        description: `Auto-created space: ${name}`,
+        location: { address: '', coordinates: { lat: undefined, lng: undefined } }
+      });
+      
+      // Find the newly created space and set it as selected
+      setTimeout(() => {
+        const newSpace = spaces.find(space => space.name === name.trim());
+        if (newSpace) {
+          form.setValue('spaceId', newSpace.id);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error creating space:', error);
+      alert('Error creating space. Please try again.');
+    }
+  };
 
   const form = useForm<z.infer<typeof assetFormSchema>>({
     resolver: zodResolver(assetFormSchema),
@@ -146,11 +190,29 @@ export const AssetForm: React.FC<AssetFormProps> = ({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {categories.filter(category => category.id && category.id.trim()).map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
                   ))}
+                  <div className="border-t mt-2 pt-2">
+                    <div 
+                      className="px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 cursor-pointer rounded"
+                      onClick={() => {
+                        const name = prompt('Enter category name:');
+                        if (name && name.trim()) {
+                          handleQuickCreateCategory(name);
+                        }
+                      }}
+                    >
+                      + Create new category
+                    </div>
+                  </div>
+                  {categories.length === 0 && (
+                    <div className="px-2 py-1 text-sm text-gray-500">
+                      No categories available. Click "Create new category" above.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
               {form.formState.errors.categoryId && (
@@ -168,11 +230,29 @@ export const AssetForm: React.FC<AssetFormProps> = ({
                   <SelectValue placeholder="Select space" />
                 </SelectTrigger>
                 <SelectContent>
-                  {spaces.map((space) => (
+                  {spaces.filter(space => space.id && space.id.trim()).map((space) => (
                     <SelectItem key={space.id} value={space.id}>
                       {space.name}
                     </SelectItem>
                   ))}
+                  <div className="border-t mt-2 pt-2">
+                    <div 
+                      className="px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 cursor-pointer rounded"
+                      onClick={() => {
+                        const name = prompt('Enter space name:');
+                        if (name && name.trim()) {
+                          handleQuickCreateSpace(name);
+                        }
+                      }}
+                    >
+                      + Create new space
+                    </div>
+                  </div>
+                  {spaces.length === 0 && (
+                    <div className="px-2 py-1 text-sm text-gray-500">
+                      No spaces available. Click "Create new space" above.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
               {form.formState.errors.spaceId && (

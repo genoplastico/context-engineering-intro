@@ -22,8 +22,8 @@ type ViewMode = 'grid' | 'list';
 export const AssetList: React.FC = memo(() => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSpace, setSelectedSpace] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSpace, setSelectedSpace] = useState<string>('all');
   const [sortField, setSortField] = useState<'name' | 'createdAt' | 'updatedAt'>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -35,8 +35,8 @@ export const AssetList: React.FC = memo(() => {
   // Build filter and sort options with useMemo for performance
   const filter = useMemo((): AssetFilter => ({
     search: searchTerm || undefined,
-    categoryIds: selectedCategory ? [selectedCategory] : undefined,
-    spaceIds: selectedSpace ? [selectedSpace] : undefined,
+    categoryIds: selectedCategory && selectedCategory !== 'all' ? [selectedCategory] : undefined,
+    spaceIds: selectedSpace && selectedSpace !== 'all' ? [selectedSpace] : undefined,
   }), [searchTerm, selectedCategory, selectedSpace]);
 
   const sort = useMemo((): AssetSortOptions => ({
@@ -72,7 +72,7 @@ export const AssetList: React.FC = memo(() => {
     setSortDirection('desc');
   }, []);
 
-  const hasActiveFilters = searchTerm || selectedCategory || selectedSpace || 
+  const hasActiveFilters = searchTerm || (selectedCategory && selectedCategory !== 'all') || (selectedSpace && selectedSpace !== 'all') || 
     sortField !== 'createdAt' || sortDirection !== 'desc';
 
   if (error) {
@@ -157,8 +157,8 @@ export const AssetList: React.FC = memo(() => {
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All categories</SelectItem>
-                {categories.map((category) => (
+                <SelectItem value="all">All categories</SelectItem>
+                {categories.filter(category => category.id && category.id.trim()).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
@@ -172,8 +172,8 @@ export const AssetList: React.FC = memo(() => {
                 <SelectValue placeholder="All spaces" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All spaces</SelectItem>
-                {spaces.map((space) => (
+                <SelectItem value="all">All spaces</SelectItem>
+                {spaces.filter(space => space.id && space.id.trim()).map((space) => (
                   <SelectItem key={space.id} value={space.id}>
                     {space.name}
                   </SelectItem>

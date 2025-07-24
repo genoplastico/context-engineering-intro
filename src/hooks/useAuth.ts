@@ -17,24 +17,55 @@ export const useAuth = (): AuthState & {
   });
 
   useEffect(() => {
+    let mounted = true;
+    console.log('🔑 useAuth useEffect - setting up auth listener');
+    
     // Subscribe to auth state changes
     const unsubscribe = authService.addAuthStateListener((user: User | null) => {
+      if (!mounted) return;
+      console.log('🔑 Auth state changed in useAuth:', !!user, user?.email);
       setState(prev => ({
         ...prev,
         user,
         loading: false,
+        error: null, // Clear any previous errors
       }));
     });
 
-    // Initialize with current user
-    const currentUser = authService.getCurrentUser();
-    setState(prev => ({
-      ...prev,
-      user: currentUser,
-      loading: false,
-    }));
+    // Initialize auth state asynchronously
+    const initializeAuth = async () => {
+      try {
+        // Wait for auth service to be fully initialized
+        const currentUser = await authService.getCurrentUserAsync();
+        console.log('🔑 Initial current user after init:', !!currentUser, currentUser?.email);
+        
+        if (mounted) {
+          setState(prev => ({
+            ...prev,
+            user: currentUser,
+            loading: false,
+            error: null,
+          }));
+        }
+      } catch (error) {
+        console.error('🔑 Error initializing auth:', error);
+        if (mounted) {
+          setState(prev => ({
+            ...prev,
+            user: null,
+            loading: false,
+            error: 'Failed to initialize authentication',
+          }));
+        }
+      }
+    };
 
-    return unsubscribe;
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async (): Promise<void> => {

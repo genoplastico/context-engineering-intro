@@ -57,3 +57,95 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* PWA-specific styles */
+@layer utilities {
+  /* Safe area insets for PWA/mobile */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-inset-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-inset-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Touch-friendly interactions */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* PWA mode adjustments */
+  .pwa-mode {
+    /* Remove default webkit appearance adjustments */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  .pwa-mode input,
+  .pwa-mode textarea,
+  .pwa-mode select {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* Mobile device optimizations */
+  .mobile-device {
+    /* Improve scrolling performance */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent zoom on input focus */
+  @media screen and (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .border-gray-200 {
+      border-color: #000;
+    }
+    
+    .text-gray-600 {
+      color: #000;
+    }
+    
+    .bg-gray-50 {
+      background-color: #fff;
+    }
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  /* Dark mode support for PWA */
+  @media (prefers-color-scheme: dark) {
+    .pwa-mode {
+      color-scheme: dark;
+    }
+  }
+}

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { where, orderBy, QueryConstraint } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import { OrganizationDB, ORG_COLLECTIONS } from '@/lib/db';
 import { Asset, AssetFilter, AssetSortOptions, AssetFormData } from '@/types/asset';
-import { useOrganization } from './useOrganization';
+import { useOrganizationContext } from '@/components/providers/OrganizationProvider';
 import { useAuth } from './useAuth';
 import { nanoid } from 'nanoid';
 
@@ -28,12 +28,15 @@ export const useAssets = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization } = useOrganizationContext();
   const { user } = useAuth();
 
-  const orgDB = currentOrganization && user 
-    ? new OrganizationDB(currentOrganization.id, user.uid)
-    : null;
+  const orgDB = useMemo(() => {
+    if (currentOrganization && user) {
+      return new OrganizationDB(currentOrganization.id, user.uid);
+    }
+    return null;
+  }, [currentOrganization?.id, user?.uid]);
 
   const buildConstraints = useCallback((): QueryConstraint[] => {
     const constraints: QueryConstraint[] = [];

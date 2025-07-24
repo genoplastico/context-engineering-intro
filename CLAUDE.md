@@ -4,6 +4,24 @@
 - **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
 - **Use venv_linux** (the virtual environment) whenever executing Python commands, including for unit tests.
 
+### 📋 **OBLIGATORIO: Consulta de Referencias Antes de Codificar**
+> **⚠️ CRÍTICO**: SIEMPRE consultar estos archivos ANTES de proponer o implementar cualquier cambio en el código.
+
+- **`docs/TYPES_REFERENCE.md`** - Contiene TODOS los tipos, interfaces y enums que existen en el proyecto. NO usar tipos que no estén documentados aquí.
+- **`docs/COMPONENTS_REFERENCE.md`** - Lista TODOS los componentes disponibles con sus props exactos. NO usar componentes que no estén documentados aquí.
+- **`docs/API_REFERENCE.md`** - Documenta TODOS los hooks, servicios y APIs disponibles. NO usar elementos que no estén documentados aquí.
+
+**REGLA FUNDAMENTAL**: Si un tipo, componente, hook o servicio NO está en estos archivos de referencia, NO EXISTE en el proyecto. No lo uses ni lo sugieras.
+
+### 📋 **OBLIGATORIO: Mantenimiento de Referencias**
+> **⚠️ CRÍTICO**: Los archivos de referencia deben mantenerse sincronizados con el código en todo momento.
+
+- **Actualizar `docs/TYPES_REFERENCE.md`** INMEDIATAMENTE después de agregar, modificar o eliminar cualquier tipo/interface
+- **Actualizar `docs/COMPONENTS_REFERENCE.md`** INMEDIATAMENTE después de crear, modificar o eliminar cualquier componente
+- **Actualizar `docs/API_REFERENCE.md`** INMEDIATAMENTE después de agregar, modificar o eliminar cualquier hook/servicio/API
+- **Verificar consistencia** entre código y documentación antes de completar cualquier tarea
+- **Responsabilidad compartida**: Tanto desarrolladores como IA deben mantener estos archivos actualizados
+
 ### 🧱 Code Structure & Modularity
 - **Never create a file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into modules or helper files.
 - **Organize code into clearly separated modules**, grouped by feature or responsibility.
@@ -49,6 +67,7 @@
 
 ### 🧠 AI Behavior Rules
 - **Never assume missing context. Ask questions if uncertain.**
-- **Never hallucinate libraries or functions** – only use known, verified  packages.
+- **Never hallucinate libraries or functions** – only use known, verified packages.
 - **Always confirm file paths and module names** exist before referencing them in code or tests.
 - **Never delete or overwrite existing code** unless explicitly instructed to or if part of a task from `TASK.md`.
+- **🚨 OBLIGATORIO: Consultar `docs/TYPES_REFERENCE.md`, `docs/COMPONENTS_REFERENCE.md` y `docs/API_REFERENCE.md` ANTES de cualquier propuesta de código.**

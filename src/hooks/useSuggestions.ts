@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Suggestion } from '@/types/task';
-import { useOrganization } from './useOrganization';
+import { useOrganizationContext } from '@/components/providers/OrganizationProvider';
 import { useAuth } from './useAuth';
 
 interface AIQuotaUsage {
@@ -27,7 +27,7 @@ export const useSuggestions = (assetId?: string): UseSuggestionsReturn => {
   const [error, setError] = useState<string | null>(null);
   const [quotaUsage, setQuotaUsage] = useState<AIQuotaUsage | null>(null);
 
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization } = useOrganizationContext();
   const { user } = useAuth();
 
   const fetchSuggestions = useCallback(async () => {

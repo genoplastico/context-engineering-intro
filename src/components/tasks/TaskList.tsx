@@ -203,7 +203,7 @@ export const TaskList: React.FC = memo(() => {
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                 <SelectItem value="COMPLETED">Completed</SelectItem>
@@ -220,7 +220,7 @@ export const TaskList: React.FC = memo(() => {
                 <SelectValue placeholder="All priorities" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All priorities</SelectItem>
+                <SelectItem value="all">All priorities</SelectItem>
                 <SelectItem value="LOW">Low</SelectItem>
                 <SelectItem value="MEDIUM">Medium</SelectItem>
                 <SelectItem value="HIGH">High</SelectItem>
@@ -234,8 +234,8 @@ export const TaskList: React.FC = memo(() => {
                 <SelectValue placeholder="All assets" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All assets</SelectItem>
-                {assets.map((asset) => (
+                <SelectItem value="all">All assets</SelectItem>
+                {assets.filter(asset => asset.id && asset.id.trim()).map((asset) => (
                   <SelectItem key={asset.id} value={asset.id}>
                     {asset.name}
                   </SelectItem>

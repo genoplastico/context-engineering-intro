@@ -49,7 +49,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
     defaultValues: {
       name: space?.name || '',
       description: space?.description || '',
-      parentId: space?.parentId || '',
+      parentId: space?.parentId || 'none',
       location: {
         address: space?.location?.address || '',
         coordinates: {
@@ -92,16 +92,16 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="parent">Parent Space</Label>
           <Select
-            value={form.watch('parentId') || ''}
-            onValueChange={(value) => form.setValue('parentId', value || undefined)}
+            value={form.watch('parentId') || 'none'}
+            onValueChange={(value) => form.setValue('parentId', value === 'none' ? undefined : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select parent (optional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No parent (root space)</SelectItem>
+              <SelectItem value="none">No parent (root space)</SelectItem>
               {availableParents
-                .filter(p => p.id !== space?.id) // Don't allow self as parent
+                .filter(p => p.id !== space?.id && p.id && p.id.trim()) // Don't allow self as parent and filter invalid IDs
                 .map((parent) => (
                   <SelectItem key={parent.id} value={parent.id}>
                     {parent.name}
@@ -264,18 +264,39 @@ export const SpaceManager: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
+  console.log('🏢 SpaceManager component rendered');
+  
   const { spaces, loading, error, createSpace, updateSpace, deleteSpace, getSpaceTree } = useSpaces();
 
   const spaceTree = getSpaceTree();
 
+  console.log('🏢 SpaceManager render:', {
+    spacesCount: spaces.length,
+    loading,
+    error,
+    spaceTreeCount: spaceTree.length,
+    spaces: spaces.map(s => ({ id: s.id, name: s.name })),
+    spaceTree: spaceTree.map(s => ({ id: s.id, name: s.name, childrenCount: s.children?.length || 0 }))
+  });
+
   const handleCreateSpace = async (data: z.infer<typeof spaceFormSchema>) => {
-    await createSpace(data);
+    // Clean up parentId - if it's 'none', convert to undefined
+    const cleanedData = {
+      ...data,
+      parentId: data.parentId === 'none' ? undefined : data.parentId
+    };
+    await createSpace(cleanedData);
     setCreateDialogOpen(false);
   };
 
   const handleEditSpace = async (data: z.infer<typeof spaceFormSchema>) => {
     if (editingSpace) {
-      await updateSpace(editingSpace.id, data);
+      // Clean up parentId - if it's 'none', convert to undefined
+      const cleanedData = {
+        ...data,
+        parentId: data.parentId === 'none' ? undefined : data.parentId
+      };
+      await updateSpace(editingSpace.id, cleanedData);
       setEditingSpace(null);
       setEditDialogOpen(false);
     }

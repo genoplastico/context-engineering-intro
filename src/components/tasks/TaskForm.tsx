@@ -182,7 +182,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No asset</SelectItem>
-                  {assets.map((asset) => (
+                  {assets.filter(asset => asset.id && asset.id.trim()).map((asset) => (
                     <SelectItem key={asset.id} value={asset.id}>
                       {asset.name}
                     </SelectItem>

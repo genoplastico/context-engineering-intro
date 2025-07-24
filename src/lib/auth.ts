@@ -13,27 +13,101 @@ import {
   getRedirectResult
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { auth, db, waitForAuthPersistence } from './firebase';
 import { User, CreateAccountData } from '@/types/auth';
 
 class AuthService {
   private authStateListeners: ((user: User | null) => void)[] = [];
   private currentUser: User | null = null;
 
+  private initialized = false;
+  private initializationPromise: Promise<void> | null = null;
+
   constructor() {
     // Only initialize auth state listener on client side
     if (typeof window !== 'undefined') {
-      // Listen to auth state changes
-      onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          const user = await this.createUserFromFirebaseUser(firebaseUser);
+      this.initializationPromise = this.initialize();
+    }
+  }
+
+  private async initialize(): Promise<void> {
+    try {
+      console.log('🔐 Initializing AuthService...');
+      
+      // Wait for auth persistence to be set
+      await waitForAuthPersistence();
+      console.log('🔐 Auth persistence ready');
+      
+      // Handle redirect result first
+      await this.handleRedirectResult();
+      
+      // Get current auth state before setting up listener
+      const currentAuthUser = auth.currentUser;
+      if (currentAuthUser) {
+        console.log('🔐 Found existing auth user:', currentAuthUser.email);
+        try {
+          const user = await this.createUserFromFirebaseUser(currentAuthUser);
           this.currentUser = user;
-          this.notifyListeners(user);
-        } else {
+        } catch (error) {
+          console.error('Error creating user from existing auth:', error);
+        }
+      }
+
+      // Set up persistent auth state listener
+      onAuthStateChanged(auth, async (firebaseUser) => {
+        console.log('🔐 Auth state changed:', !!firebaseUser, firebaseUser?.email);
+        try {
+          if (firebaseUser) {
+            const user = await this.createUserFromFirebaseUser(firebaseUser);
+            this.currentUser = user;
+            this.notifyListeners(user);
+          } else {
+            this.currentUser = null;
+            this.notifyListeners(null);
+          }
+        } catch (error) {
+          console.error('Error in auth state change handler:', error);
           this.currentUser = null;
           this.notifyListeners(null);
         }
       });
+
+      // Wait for initial auth state with timeout
+      await new Promise<void>((resolve) => {
+        let resolved = false;
+        
+        // Set a timeout to prevent hanging
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            console.log('⏱️ Auth state timeout - proceeding with current state');
+            resolved = true;
+            this.initialized = true;
+            resolve();
+          }
+        }, 3000); // 3 second timeout
+        
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          if (!resolved) {
+            console.log('🔐 Initial auth state received:', !!firebaseUser);
+            resolved = true;
+            this.initialized = true;
+            clearTimeout(timeout);
+            unsubscribe(); // Unsubscribe after first state
+            resolve();
+          }
+        });
+      });
+
+      console.log('✅ AuthService initialized');
+    } catch (error) {
+      console.error('❌ Error initializing AuthService:', error);
+      this.initialized = true;
+    }
+  }
+
+  async waitForInitialization(): Promise<void> {
+    if (this.initializationPromise) {
+      await this.initializationPromise;
     }
   }
 
@@ -42,29 +116,42 @@ class AuthService {
     if (typeof window === 'undefined') return;
     
     try {
+      console.log('🔍 Checking for redirect result...');
       const result = await getRedirectResult(auth);
       if (result?.user) {
+        console.log('✅ Redirect result found, user signed in:', result.user.email);
         // User signed in via redirect, create/update user document
         await this.createOrUpdateUserDocument(result.user);
+      } else {
+        console.log('ℹ️ No redirect result found');
       }
     } catch (error) {
-      console.error('Error handling redirect result:', error);
+      console.error('❌ Error handling redirect result:', error);
     }
   }
 
   private async createUserFromFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
-    // Get additional user data from Firestore
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-    const userData = userDoc.data();
+    try {
+      console.log('👤 Creating user from Firebase user:', firebaseUser.email);
+      // Get additional user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      const userData = userDoc.data();
 
-    return {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email!,
-      displayName: firebaseUser.displayName || userData?.displayName || 'User',
-      photoURL: firebaseUser.photoURL || userData?.photoURL,
-      organizations: userData?.organizations || [],
-      createdAt: userData?.createdAt || new Date(),
-    };
+      const user = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email!,
+        displayName: firebaseUser.displayName || userData?.displayName || 'User',
+        photoURL: firebaseUser.photoURL || userData?.photoURL,
+        organizations: userData?.organizations || [],
+        createdAt: userData?.createdAt || new Date(),
+      };
+      
+      console.log('✅ User created successfully:', user.email);
+      return user;
+    } catch (error) {
+      console.error('❌ Error creating user from Firebase user:', error);
+      throw error;
+    }
   }
 
   private async createOrUpdateUserDocument(firebaseUser: FirebaseUser, additionalData?: any) {
@@ -114,6 +201,15 @@ class AuthService {
     return this.currentUser;
   }
 
+  async getCurrentUserAsync(): Promise<User | null> {
+    await this.waitForInitialization();
+    return this.currentUser;
+  }
+
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
   // Detect if user is on mobile device
   private isMobileDevice(): boolean {
     if (typeof window === 'undefined') return false;
@@ -128,9 +224,10 @@ class AuthService {
     try {
       if (this.isMobileDevice()) {
         // Use redirect for mobile devices
+        console.log('📱 Mobile device detected, using redirect flow');
         await signInWithRedirect(auth, provider);
-        // The result will be handled by handleRedirectResult
-        throw new Error('Redirect initiated'); // This will be caught and handled appropriately
+        // Return a pending user state - the redirect result will be handled on return
+        return { uid: '', email: '', displayName: 'Redirecting...', organizations: [], createdAt: new Date() };
       } else {
         // Use popup for desktop
         const result = await signInWithPopup(auth, provider);
@@ -138,9 +235,6 @@ class AuthService {
         return await this.createUserFromFirebaseUser(result.user);
       }
     } catch (error: any) {
-      if (error.message === 'Redirect initiated') {
-        throw error; // Let the redirect happen
-      }
       console.error('Error signing in with Google:', error);
       throw new Error('Failed to sign in with Google');
     }
@@ -246,7 +340,12 @@ class AuthService {
 
   async signOut(): Promise<void> {
     try {
+      console.log('🔐 Signing out user...');
       await firebaseSignOut(auth);
+      // Clear current user immediately
+      this.currentUser = null;
+      this.notifyListeners(null);
+      console.log('✅ User signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
       throw new Error('Failed to sign out');

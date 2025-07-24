@@ -9,6 +9,7 @@ The AI agent only gets the context you are appending to the PRP and training dat
 ## Research Process
 
 1. **Codebase Analysis**
+   - **🚨 OBLIGATORIO: Consultar docs/TYPES_REFERENCE.md, docs/COMPONENTS_REFERENCE.md y docs/API_REFERENCE.md**
    - Search for similar features/patterns in the codebase
    - Identify files to reference in PRP
    - Note existing conventions to follow

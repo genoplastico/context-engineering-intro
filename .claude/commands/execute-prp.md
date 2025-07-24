@@ -8,6 +8,7 @@ Implement a feature using using the PRP file.
 
 1. **Load PRP**
    - Read the specified PRP file
+   - **🚨 OBLIGATORIO: Validar todos los componentes/tipos/hooks mencionados contra docs/TYPES_REFERENCE.md, docs/COMPONENTS_REFERENCE.md y docs/API_REFERENCE.md**
    - Understand all context and requirements
    - Follow all instructions in the PRP and extend the research if needed
    - Ensure you have all needed context to implement the PRP fully

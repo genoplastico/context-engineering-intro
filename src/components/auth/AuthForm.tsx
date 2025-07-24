@@ -90,10 +90,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     
     try {
       await signInWithGoogle();
-      router.push('/dashboard');
+      // Don't push to dashboard here - let auth state handle it
+      // Mobile devices will redirect, desktop will complete here
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
-    } finally {
+      if (err instanceof Error && err.message !== 'Redirect initiated') {
+        setError(err.message);
+      }
       setIsLoading(false);
     }
   };
