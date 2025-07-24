@@ -1,0 +1,6 @@
+[2025-07-24T04:59:12.421Z] [INFO] Iniciando servidor MCP Firebase
+[2025-07-24T04:59:12.425Z] [INFO] Configurando manejadores de herramientas
+[2025-07-24T04:59:12.427Z] [INFO] Iniciando transporte stdio
+[2025-07-24T04:59:12.431Z] [INFO] Servidor MCP Firebase ejecutándose en stdio
+[2025-07-24T04:59:12.463Z] [REQUEST] Solicitud de lista de herramientas
+[2025-07-24T04:59:12.464Z] [RESPONSE] Lista de herramientas enviada
