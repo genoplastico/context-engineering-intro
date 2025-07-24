@@ -4,3 +4,15 @@
 [2025-07-24T04:59:12.431Z] [INFO] Servidor MCP Firebase ejecutándose en stdio
 [2025-07-24T04:59:12.463Z] [REQUEST] Solicitud de lista de herramientas
 [2025-07-24T04:59:12.464Z] [RESPONSE] Lista de herramientas enviada
+[2025-07-24T08:19:01.044Z] [INFO] Iniciando servidor MCP Firebase
+[2025-07-24T08:19:01.054Z] [INFO] Configurando manejadores de herramientas
+[2025-07-24T08:19:01.055Z] [INFO] Iniciando transporte stdio
+[2025-07-24T08:19:01.068Z] [INFO] Servidor MCP Firebase ejecutándose en stdio
+[2025-07-24T08:19:01.179Z] [REQUEST] Solicitud de lista de herramientas
+[2025-07-24T08:19:01.181Z] [RESPONSE] Lista de herramientas enviada
+[2025-07-24T09:19:54.398Z] [INFO] Iniciando servidor MCP Firebase
+[2025-07-24T09:19:54.434Z] [INFO] Configurando manejadores de herramientas
+[2025-07-24T09:19:54.442Z] [INFO] Iniciando transporte stdio
+[2025-07-24T09:19:54.462Z] [INFO] Servidor MCP Firebase ejecutándose en stdio
+[2025-07-24T09:19:55.060Z] [REQUEST] Solicitud de lista de herramientas
+[2025-07-24T09:19:55.062Z] [RESPONSE] Lista de herramientas enviada

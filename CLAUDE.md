@@ -29,31 +29,26 @@
 - Add new sub-tasks or TODOs discovered during development to `TASK.md` under a “Discovered During Work” section.
 
 ### 📎 Style & Conventions
-- **Use Python** as the primary language.
-- **Follow PEP8**, use type hints, and format with `black`.
-- **Use `pydantic` for data validation**.
-- Use `FastAPI` for APIs and `SQLAlchemy` or `SQLModel` for ORM if applicable.
-- Write **docstrings for every function** using the Google style:
-  ```python
-  def example():
-      """
-      Brief summary.
 
-      Args:
-          param1 (type): Description.
-
-      Returns:
-          type: Description.
-      """
-  ```
 
 ### 📚 Documentation & Explainability
 - **Update `README.md`** when new features are added, dependencies change, or setup steps are modified.
 - **Comment non-obvious code** and ensure everything is understandable to a mid-level developer.
 - When writing complex logic, **add an inline `# Reason:` comment** explaining the why, not just the what.
 
+### 🔍 Dependency Management
+- **Before adding any configuration that references external packages**, verify the package is installed
+- **When enabling Next.js experimental features**, check if they require additional dependencies
+- **Always run `npm install` after adding new imports or configurations**
+- **Never reference a package in config files without installing it first**
+
+### ⚠️ Configuration Safety
+- **Test configurations incrementally** - add one feature at a time and verify it works
+- **Document any peer dependencies** when enabling experimental features
+- **Run the dev server after each configuration change** to catch errors early
+
 ### 🧠 AI Behavior Rules
 - **Never assume missing context. Ask questions if uncertain.**
-- **Never hallucinate libraries or functions** – only use known, verified Python packages.
+- **Never hallucinate libraries or functions** – only use known, verified  packages.
 - **Always confirm file paths and module names** exist before referencing them in code or tests.
 - **Never delete or overwrite existing code** unless explicitly instructed to or if part of a task from `TASK.md`.
